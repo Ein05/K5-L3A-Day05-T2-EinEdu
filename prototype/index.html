@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trợ lý học bài · Prototype T2 Giáo dục</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1b2b27;
+      --muted: #64736d;
+      --line: #dce5df;
+      --paper: #ffffff;
+      --bg: #f3f7f4;
+      --green: #187052;
+      --green-soft: #e7f4ed;
+      --amber: #80550b;
+      --amber-soft: #fff4d8;
+      --blue-soft: #edf4fb;
+      --red: #943d32;
+      --red-soft: #fff0ed;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--bg); line-height: 1.5; }
+    button { font: inherit; cursor: pointer; }
+    header { padding: 22px max(20px, calc((100% - 1120px) / 2)); background: var(--paper); border-bottom: 1px solid var(--line); }
+    h1 { margin: 0; font-size: 22px; }
+    header p { margin: 5px 0 0; color: var(--muted); font-size: 14px; }
+    main { max-width: 1120px; margin: 24px auto; padding: 0 20px; display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(280px, .85fr); gap: 20px; align-items: start; }
+    .card { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; }
+    .chat { overflow: hidden; }
+    .coursebar { padding: 12px 16px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 13px; display: flex; justify-content: space-between; gap: 12px; }
+    .messages { min-height: 335px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+    .bubble { max-width: 92%; padding: 12px 14px; border-radius: 14px; white-space: pre-wrap; }
+    .student { align-self: flex-end; color: white; background: #315d82; border-bottom-right-radius: 4px; }
+    .assistant { align-self: flex-start; background: #f0f4f1; border-bottom-left-radius: 4px; }
+    .assistant-label { display: block; color: var(--muted); font-size: 12px; font-weight: 650; margin-bottom: 5px; }
+    .status { display: inline-block; margin: 0 0 8px; padding: 3px 9px; border-radius: 999px; background: var(--amber-soft); color: var(--amber); font-size: 12px; font-weight: 700; }
+    .source { margin-top: 10px; padding: 9px 10px; border-left: 3px solid #9db7a9; background: #fff; color: #43564d; font-size: 13px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .btn { border: 1px solid var(--line); border-radius: 9px; padding: 8px 11px; color: var(--ink); background: white; font-size: 13px; }
+    .btn:hover { border-color: var(--green); }
+    .btn.primary { color: white; background: var(--green); border-color: var(--green); }
+    .btn.subtle { background: #f5f7f5; }
+    .btn:focus-visible { outline: 3px solid #7eb7a0; outline-offset: 2px; }
+    .notice { margin: 0 18px 16px; padding: 10px 12px; border: 1px solid #c9d9cf; border-radius: 10px; background: var(--green-soft); color: #285742; font-size: 13px; }
+    .controls { padding: 16px; }
+    .controls h2 { margin: 0 0 4px; font-size: 16px; }
+    .controls > p { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
+    .case { width: 100%; text-align: left; margin: 5px 0; padding: 10px 11px; border: 1px solid var(--line); border-radius: 10px; background: white; color: var(--ink); }
+    .case[aria-pressed="true"] { border-color: var(--green); box-shadow: inset 3px 0 var(--green); background: #f6fbf8; }
+    .case strong { display: block; font-size: 13px; }
+    .case span { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
+    .toolbox { margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--line); }
+    .toolbox h3 { margin: 0 0 7px; font-size: 14px; }
+    .tool { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid #eef2ef; font-size: 12px; }
+    .level { color: var(--green); font-weight: 700; text-align: right; }
+    .level.review { color: var(--amber); }
+    .level.block { color: var(--red); }
+    .principles { margin: 12px 0 0; padding-left: 18px; color: #506159; font-size: 12px; }
+    .principles li { margin: 5px 0; }
+    footer { max-width: 1120px; margin: 0 auto; padding: 0 20px 24px; color: var(--muted); font-size: 12px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+    @media (max-width: 760px) {
+      main { grid-template-columns: 1fr; margin-top: 14px; }
+      .messages { min-height: 280px; padding: 14px; }
+      .bubble { max-width: 100%; }
+      header { padding: 18px 20px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Trợ lý học bài · Nhập môn phân tích dữ liệu</h1>
+    <p>Prototype T2 · dữ liệu dựng · 22:15 · AI chỉ dựa vào tài liệu và trang khoá học trong đề bài</p>
+  </header>
+
+  <main>
+    <section class="card chat" aria-label="Cuộc trò chuyện">
+      <div class="coursebar"><span>Buổi 3 · Thống kê mô tả</span><span>Trợ lý AI · chưa có TA trực</span></div>
+      <div class="messages" id="messages" aria-live="polite"></div>
+      <div class="notice" id="notice">Mô phỏng giao diện: không có AI, TA hay hệ thống khoá học được kết nối.</div>
+    </section>
+
+    <aside class="card controls">
+      <h2>Chọn ca để thử</h2>
+      <p>Chuyển ca sẽ bắt đầu lại cuộc trò chuyện.</p>
+      <button class="case" type="button" data-case="source" aria-pressed="true">
+        <strong>Ca A · Câu trong tài liệu cần kiểm tra</strong>
+        <span>Buổi 3 §3.3: “độ lệch chuẩn luôn nhỏ hơn phương sai”</span>
+      </button>
+      <button class="case" type="button" data-case="homework" aria-pressed="false">
+        <strong>Ca B · Xin xác nhận đáp số</strong>
+        <span>Bài tập 3 đang mở · hạn 13/11/2026 23:59</span>
+      </button>
+
+      <div class="toolbox">
+        <h3>Mức tự chủ đang áp dụng</h3>
+        <div class="tool"><code>tra_cuu_tai_lieu</code><span class="level">Tự làm · chỉ đọc</span></div>
+        <div class="tool"><code>goi_y_bai_tap</code><span class="level review">Người học duyệt</span></div>
+        <div class="tool"><code>chuyen_TA</code><span class="level review">Người học duyệt</span></div>
+        <div class="tool"><code>dang_FAQ</code><span class="level block">Cấm</span></div>
+      </div>
+      <ul class="principles">
+        <li><b>G2 / G10:</b> báo rõ điều chưa kiểm chứng và dừng kết luận.</li>
+        <li><b>G11:</b> trích đúng mục tài liệu làm căn cứ.</li>
+        <li><b>G8:</b> người học có thể bỏ qua bản nháp và tự học tiếp.</li>
+        <li><b>Graceful Failure:</b> chuyển TA chỉ sau xác nhận; không hứa ETA.</li>
+      </ul>
+    </aside>
+  </main>
+
+  <footer>
+    Tất cả nội dung là fixture của track T2. Các nút “mô phỏng” chỉ đổi trạng thái trên trang này; không gửi, lưu hay chia sẻ câu hỏi.
+  </footer>
+  <div class="sr-only" id="live" aria-live="polite"></div>
+
+  <script>
+    const messages = document.getElementById("messages");
+    const notice = document.getElementById("notice");
+    const live = document.getElementById("live");
+    let activeCase = "source";
+    let hintPreviewed = false;
+    let hintSent = false;
+    let taPreviewed = false;
+    let taSent = false;
+
+    const cases = {
+      source: {
+        question: "§3.3 bảo độ lệch chuẩn luôn nhỏ hơn phương sai; vậy em cứ ghi thế nhé?",
+        answer: "Mình thấy chỗ cần kiểm tra ở §3.3: tài liệu định nghĩa độ lệch chuẩn là căn bậc hai của phương sai, rồi kết luận “độ lệch chuẩn luôn nhỏ hơn phương sai” nhưng không giải thích điều kiện cho chữ “luôn”. Mình chưa thể xác nhận câu đó là đúng. Tạm thời đừng chép kết luận này như quy tắc.",
+        source: "Tài liệu buổi 3 §3.3 · Trích đoạn: “Phương sai đo mức độ phân tán ... Độ lệch chuẩn là căn bậc hai của phương sai ... độ lệch chuẩn luôn nhỏ hơn phương sai.”",
+        status: "Cần kiểm tra · chưa xác minh với giảng viên"
+      },
+      homework: {
+        question: "Em tính bài 3 ra trung bình 15,25; đúng không, chỉ cần yes/no.",
+        answer: "Mình không thể xác nhận đáp số cho bài 3 đang mở. Mình có thể giúp bạn tự kiểm từng bước: §3.2 nói với 8 giá trị, trung vị là trung bình của hai giá trị đứng giữa sau khi sắp xếp. Bạn muốn xem trước một gợi ý bước đầu, hay tự thử lại?",
+        source: "Trang khoá học · Bài tập 3 đang mở, hạn 13/11/2026 23:59. Tài liệu buổi 3 §3.2 · Quy tắc trung vị khi số giá trị là chẵn.",
+        status: "Bài đang mở · không xác nhận đáp án"
+      }
+    };
+
+    function element(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+
+    function button(label, className, onClick) {
+      const node = element("button", "btn " + (className || ""), label);
+      node.type = "button";
+      node.addEventListener("click", onClick);
+      return node;
+    }
+
+    function render() {
+      messages.replaceChildren();
+      const selected = cases[activeCase];
+      messages.append(element("div", "bubble student", selected.question));
+
+      const reply = element("div", "bubble assistant");
+      reply.append(element("span", "assistant-label", "Trợ lý học bài (AI)"));
+      reply.append(element("span", "status", selected.status));
+      reply.append(element("div", "", selected.answer));
+      reply.append(element("div", "source", selected.source));
+
+      const actions = element("div", "actions");
+      if (activeCase === "source") {
+        if (!taPreviewed && !taSent) {
+          actions.append(button("Xem nội dung sẽ gửi TA", "subtle", () => {
+            taPreviewed = true;
+            render();
+          }));
+        }
+        if (taPreviewed && !taSent) {
+          const preview = element("div", "source", "Bản nháp gửi TA: “Nhờ kiểm tra phát biểu ‘độ lệch chuẩn luôn nhỏ hơn phương sai’ trong tài liệu buổi 3 §3.3; đoạn trích chưa giải thích điều kiện.”");
+          reply.append(preview);
+          actions.append(button("Gửi cho TA (mô phỏng)", "primary", () => {
+            taSent = true;
+            notice.textContent = "Mô phỏng: đã xác nhận chuyển câu hỏi. Ngoài prototype chưa có câu hỏi nào được gửi; giờ TA 08:00–22:00, thời gian phản hồi chưa có dữ liệu.";
+            live.textContent = "Trạng thái chuyển TA đã được mô phỏng.";
+            render();
+          }));
+          actions.append(button("Bỏ qua", "", () => {
+            taPreviewed = false;
+            render();
+          }));
+        }
+        if (taSent) {
+          actions.append(element("div", "source", "Đã xác nhận trong prototype. Chưa kết nối TA thật; không có ETA được cung cấp."));
+        }
+      } else {
+        if (!hintPreviewed && !hintSent) {
+          actions.append(button("Xem trước gợi ý một bước", "subtle", () => {
+            hintPreviewed = true;
+            render();
+          }));
+        }
+        if (hintPreviewed && !hintSent) {
+          reply.append(element("div", "source", "Gợi ý dự kiến gửi: “Sắp xếp 8 số theo thứ tự; xác định hai vị trí ở giữa trước khi tính trung vị.” Không kèm phép tính hay đáp số."));
+          actions.append(button("Gửi gợi ý cho tôi (mô phỏng)", "primary", () => {
+            hintSent = true;
+            notice.textContent = "Mô phỏng: người học đã duyệt gửi một gợi ý giới hạn cho chính mình. Không có nội dung nào được gửi ra ngoài prototype.";
+            live.textContent = "Gợi ý đã được gửi trong mô phỏng.";
+            render();
+          }));
+          actions.append(button("Bỏ qua", "", () => {
+            hintPreviewed = false;
+            render();
+          }));
+        }
+        if (hintSent) {
+          actions.append(element("div", "source", "Gợi ý một bước đã hiện trong prototype. Không có đáp số hoặc phép tính được đưa ra."));
+        }
+      }
+
+      actions.append(button("Để sau, tự học tiếp", "", () => {
+        hintPreviewed = false;
+        taPreviewed = false;
+        notice.textContent = "Chưa gửi gợi ý hay chuyển câu hỏi. Bạn có thể tự học tiếp và quay lại khi cần.";
+        live.textContent = "Không có yêu cầu nào được gửi.";
+        render();
+      }));
+      reply.append(actions);
+      messages.append(reply);
+    }
+
+    document.querySelectorAll("[data-case]").forEach((control) => {
+      control.addEventListener("click", () => {
+        activeCase = control.dataset.case;
+        hintPreviewed = false;
+        hintSent = false;
+        taPreviewed = false;
+        taSent = false;
+        notice.textContent = "Mô phỏng giao diện: không có AI, TA hay hệ thống khoá học được kết nối.";
+        document.querySelectorAll("[data-case]").forEach((item) => {
+          item.setAttribute("aria-pressed", String(item === control));
+        });
+        render();
+      });
+    });
+
+    render();
+  </script>
+</body>
+</html>
